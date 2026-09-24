@@ -1,0 +1,31 @@
+# Environment & Secrets
+.env
+.env.local
+*.env
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+
+# Logs & Storage
+*.log
+recordings/
+snapshots/
+camera_records.db
+*.sqlite3
+
+# Model weights
+*.pt
+*.onnx
+*.engine
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

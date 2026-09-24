@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Live Monitoring - Crimson Vision{% endblock %}
+
+{% block content %}
+<!-- Controls Toolbar -->
+<div class="control-bar">
+  <!-- AI Detection Mode Group -->
+  <div class="control-group">
+    <span class="control-label">AI Detection Mode:</span>
+    <div class="btn-group" id="ai-mode-group">
+      <button type="button" class="btn-pill {% if active_category == 'off' %}active{% endif %}" data-cat="off"
+        id="btn-mode-off">
+        Off
+      </button>
+      <button type="button" class="btn-pill {% if active_category == 'person' %}active emerald{% endif %}"
+        data-cat="person" id="btn-mode-person">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        Person
+      </button>
+      <button type="button" class="btn-pill {% if active_category == 'vehicle' %}active crimson{% endif %}"
+        data-cat="vehicle" id="btn-mode-vehicle">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="1" y="3" width="15" height="13"></rect>
+          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+          <circle cx="5.5" cy="18.5" r="2.5"></circle>
+          <circle cx="18.5" cy="18.5" r="2.5"></circle>
+        </svg>
+        Vehicle + OCR & Speed
+      </button>
+    </div>
+  </div>
+
+  <!-- Interactive View State & Quick Back to Grid -->
+  <div class="control-group">
+    <span class="control-label">View:</span>
+    <button type="button" class="action-btn" id="btn-return-grid" style="display: none;" onclick="returnToGrid()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+      </svg>
+      <span>Back to All Cameras</span>
+    </button>
+    <span id="view-mode-badge" class="tag" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+      Grid View (Tap Camera to Zoom)
+    </span>
+  </div>
+
+  <!-- Media Controls (Record & Audio) -->
+  <div class="control-group">
+    <!-- Video & Audio Recording Toggle Button -->
+    <button type="button" class="action-btn rec-btn" id="btn-record-toggle" title="Start/Stop recording camera feeds with synchronized audio">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="12" r="8"></circle>
+      </svg>
+      <span id="record-btn-text">Record</span>
+    </button>
+
+    <!-- Live In-Browser Audio Player Button -->
+    <button type="button" class="action-btn" id="btn-audio-toggle" title="Listen to live camera audio in your browser">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="audio-icon">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      </svg>
+      <span id="audio-btn-text">Audio: Off</span>
+    </button>
+  </div>
+</div>
+
+<!-- Hidden HTML5 Audio Element for in-browser camera sound -->
+<audio id="live-audio-player" preload="none" style="display: none;"></audio>
+
+<!-- Main Live Monitoring Layout -->
+<div class="live-layout">
+  <!-- Interactive Video Feed Container with Zoom & Pan viewport -->
+  <div class="video-container" id="stream-viewport">
+    <div class="video-overlay-header">
+      <div class="feed-badge" id="feed-title-badge">
+        <span class="status-dot"></span>
+        <span id="feed-name-label">Multi-Camera Grid View</span>
+      </div>
+
+      <!-- Interactive Zoom Floating Control Bar (Visible in Single Camera Mode) -->
+      <div class="zoom-floating-bar" id="zoom-control-bar" style="display: none;">
+        <button type="button" class="zoom-btn" id="btn-zoom-out" title="Zoom Out (-)">-</button>
+        <span class="zoom-level-text" id="zoom-level-display">1.0x</span>
+        <button type="button" class="zoom-btn" id="btn-zoom-in" title="Zoom In (+)">+</button>
+        <button type="button" class="zoom-btn" id="btn-zoom-reset" title="Reset Zoom"
+          style="font-size: 0.72rem; padding: 0 0.5rem;">1x</button>
+      </div>
+
+      <div class="feed-badge" id="feed-fps-badge">
+        <span>15 FPS</span>
+        <span style="color: var(--text-muted);">|</span>
+        <span style="color: var(--accent-primary);">Live Stream</span>
+      </div>
+    </div>
+
+    <!-- Video Canvas / Image wrapper for zoom/pan transform -->
+    <div class="video-stream-wrapper" id="video-stream-wrapper">
+      <img src="/video_feed/grid" alt="Live Camera Feed" class="video-stream-img" id="live-video-stream">
+    </div>
+
+    <!-- On-screen Tap & Zoom gesture hint -->
+    <div class="stream-hint-overlay" id="stream-gesture-hint">
+      <span>👆 Tap any camera to focus & zoom • Scroll to zoom in/out • Drag to pan</span>
+    </div>
+  </div>
+
+  <!-- Right Side Live Telemetry & System Overview Drawer -->
+  <div class="side-card">
+    <!-- Camera Health Overview -->
+    <div class="side-header">
+      <div class="side-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>Cameras Status</span>
+      </div>
+      <span class="status-chip" id="online-counter" style="padding: 0.2rem 0.6rem; font-size: 0.75rem;">
+        {{ statuses|length }} Configured
+      </span>
+    </div>
+
+    <!-- Compact Camera Status Indicators -->
+    <div class="camera-status-strip" id="camera-status-strip">
+      {% for name, info in statuses.items() %}
+      <div class="cam-status-pill" id="pill-{{ name|replace(' ', '-') }}">
+        <span class="status-dot {% if info.status != 'online' %}offline{% endif %}"
+          id="dot-{{ name|replace(' ', '-') }}"></span>
+        <span class="cam-name">{{ name }}</span>
+        {% if info.motion %}
+        <span class="tag"
+          style="background: rgba(245,158,11,0.2); color:#fbbf24; font-size:0.62rem; padding: 0.1rem 0.35rem;">MOTION</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Real-time Detection Stream -->
+    <div class="side-header" style="margin-top: 0.5rem;">
+      <div class="side-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+        <span>Live Telemetry</span>
+      </div>
+      <span class="tag" id="active-category-tag" style="text-transform: capitalize;">
+        {{ active_category }}
+      </span>
+    </div>
+
+    <div class="live-detections-feed" id="live-detections-container">
+      <div style="color: var(--text-muted); font-size: 0.82rem; text-align: center; padding: 1.5rem 0;">
+        Scanning live feeds for detections...
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script id="camera-data" type="application/json">{{ cameras|tojson }}</script>
+<script>
+  const CAMERA_NAMES = JSON.parse(document.getElementById('camera-data').textContent);
+</script>
+<script src="/static/js/live.js"></script>
+{% endblock %}

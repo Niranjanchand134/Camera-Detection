@@ -1,0 +1,25 @@
+{
+  "frame_width": 480,
+  "frame_height": 270,
+  "motion_detection": true,
+  "recordings_folder": "recordings",
+  "snapshots_folder": "snapshots",
+  "record_fps": 15,
+  "detection": {
+    "yolo_model": "yolo26m.pt",
+    "confidence_threshold": 0.5,
+    "detect_interval_sec": 0.5,
+    "inference_size": 320,
+    "pixels_per_meter": 20,
+    "plate_ocr_enabled": true
+  },
+  "audio": {
+    "enabled": true,
+    "samplerate": 44100
+  },
+  "web": {
+    "host": "0.0.0.0",
+    "port": 5000,
+    "debug": false
+  }
+}

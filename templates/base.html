@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Camera Detection - Camera Intelligence System{% endblock %}</title>
+  
+  <!-- Modern Typography from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Custom Design System -->
+  <link rel="stylesheet" href="/static/css/style.css">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="navbar">
+    <a href="/" class="brand-section">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+          <circle cx="12" cy="13" r="4"></circle>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">Camera Detection</div>
+        <div class="brand-subtitle">AI Surveillance & Intelligence</div>
+      </div>
+    </a>
+
+    <!-- Navigation Tabs (Live vs Records) -->
+    <nav class="nav-links">
+      <a href="/live" class="nav-link {% if page == 'live' %}active{% endif %}" id="nav-live-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="2"></circle>
+          <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path>
+        </svg>
+        <span>Live Monitoring</span>
+      </a>
+      <a href="/records" class="nav-link {% if page == 'records' %}active{% endif %}" id="nav-records-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span>Records & Reports</span>
+      </a>
+    </nav>
+
+    <!-- System Status & Clock -->
+    <div class="header-status-panel">
+      <div class="status-chip" id="system-health-chip">
+        <span class="status-dot pulse" id="header-status-dot"></span>
+        <span id="header-status-text">System Active</span>
+      </div>
+      <div class="clock-display" id="header-clock">--:--:--</div>
+    </div>
+  </header>
+
+  <!-- Main Content Body -->
+  <main class="main-wrapper">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    // Live Clock updater
+    function updateClock() {
+      const now = new Date();
+      const clockEl = document.getElementById('header-clock');
+      if (clockEl) {
+        clockEl.textContent = now.toTimeString().split(' ')[0];
+      }
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

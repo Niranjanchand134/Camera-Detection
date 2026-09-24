@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Records & Intelligence Reports - Crimson Vision{% endblock %}
+
+{% block content %}
+<!-- Analytics Summary Cards -->
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+    </div>
+    <div class="stat-info">
+      <span class="stat-number" id="stat-total-events">{{ stats.total_events }}</span>
+      <span class="stat-label">Total Events Logged</span>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon amber">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+    </div>
+    <div class="stat-info">
+      <span class="stat-number" id="stat-vehicles">{{ stats.vehicle_count }}</span>
+      <span class="stat-label">Vehicles Tracked</span>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon green">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+    </div>
+    <div class="stat-info">
+      <span class="stat-number" id="stat-persons">{{ stats.person_count }}</span>
+      <span class="stat-label">Persons Detected</span>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon purple">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="8" x2="17" y2="8"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="7" y1="16" x2="12" y2="16"></line></svg>
+    </div>
+    <div class="stat-info">
+      <span class="stat-number" id="stat-plates">{{ stats.plate_count }}</span>
+      <span class="stat-label">Plates Identified</span>
+    </div>
+  </div>
+</div>
+
+<!-- Filters & Search Single-Line Toolbar -->
+<div class="filter-card">
+  <form id="filter-form" class="filter-toolbar" onsubmit="event.preventDefault(); applyFilter();">
+    <div class="filter-inline-item">
+      <span class="filter-label">Cam:</span>
+      <select class="form-control compact" id="filter-camera">
+        <option value="">All Cameras</option>
+        {% for cam in cameras %}
+        <option value="{{ cam }}">{{ cam }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-inline-item">
+      <span class="filter-label">Type:</span>
+      <select class="form-control compact" id="filter-category">
+        <option value="all">All Types</option>
+        <option value="person">Person</option>
+        <option value="vehicle">Vehicle</option>
+      </select>
+    </div>
+
+    <div class="filter-inline-item">
+      <span class="filter-label">Plate:</span>
+      <input type="text" class="form-control compact" id="filter-plate" placeholder="Plate #">
+    </div>
+
+    <div class="filter-inline-item">
+      <span class="filter-label">Speed:</span>
+      <input type="number" class="form-control compact" id="filter-speed" placeholder="Min km/h" style="width: 80px;">
+    </div>
+
+    <div class="filter-inline-item">
+      <span class="filter-label">From:</span>
+      <input type="datetime-local" class="form-control compact" id="filter-start-time">
+    </div>
+
+    <div class="filter-inline-item">
+      <span class="filter-label">To:</span>
+      <input type="datetime-local" class="form-control compact" id="filter-end-time">
+    </div>
+
+    <div class="filter-actions-inline">
+      <button type="button" class="action-btn compact" id="btn-reset-filters" onclick="resetFilters()" title="Reset all search filters">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+        Reset
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Intelligence Events Data Table -->
+<div class="table-card">
+  <div class="table-header-bar">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 600;">Detection & Telemetry Records</h3>
+      <span class="tag" id="table-total-badge">Loading records...</span>
+    </div>
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+      <button type="button" class="action-btn" id="btn-export-csv" onclick="exportCSV()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        Export CSV
+      </button>
+      <button type="button" class="action-btn danger" id="btn-delete-all-records" onclick="deleteAllRecords()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        Delete All Records
+      </button>
+    </div>
+  </div>
+
+  <div class="table-scroll-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 70px;">Snapshot</th>
+          <th style="width: 170px;">Timestamp</th>
+          <th>Camera</th>
+          <th>Category</th>
+          <th>Confidence</th>
+          <th>Estimated Speed</th>
+          <th>License Plate</th>
+          <th style="text-align: right; width: 140px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="records-table-body">
+        <tr>
+          <td colspan="8" style="text-align: center; padding: 2rem;">Loading detection records...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Bar -->
+  <div class="pagination-bar">
+    <span id="pagination-info">Showing page 1 of 1</span>
+    <div class="pagination-controls">
+      <button type="button" class="page-btn" id="btn-prev-page" onclick="changePage(-1)" disabled>Previous</button>
+      <button type="button" class="page-btn" id="btn-next-page" onclick="changePage(1)" disabled>Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- Video Recordings Table Card -->
+<div class="table-card" style="margin-bottom: 2rem;">
+  <div class="table-header-bar" style="flex-wrap: wrap; gap: 0.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 600;">Saved Video Recordings Archive</h3>
+      <span class="tag" id="recordings-count-badge">Loading...</span>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <button type="button" class="action-btn" onclick="loadRecordings()" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Refresh video list">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        Refresh
+      </button>
+      <button type="button" class="action-btn danger" onclick="deleteAllRecordings()" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Delete all recordings matching current search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        Delete Filtered Videos
+      </button>
+    </div>
+  </div>
+
+  <!-- Manual Typing Search Filter Toolbar -->
+  <div style="padding: 0.75rem 1.25rem 0.5rem 1.25rem; border-bottom: 1px solid var(--border-color);">
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 0.4rem; flex: 1; min-width: 280px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-muted);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" class="form-control compact" id="rec-filter-search" placeholder="Type to filter: e.g. 2026-09-23, Camera 1, 13:30, or filename..." style="width: 100%;">
+      </div>
+      <button type="button" class="action-btn compact" onclick="resetRecSearch()" title="Clear search text">
+        Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- Recordings Data Table -->
+  <div style="overflow-x: auto;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 175px;">Date & Time</th>
+          <th>Camera</th>
+          <th>Recording File</th>
+          <th>File Size</th>
+          <th>Audio</th>
+          <th style="text-align: right; width: 220px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="recordings-table-body">
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading video recordings...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Media Modal (Snapshot Zoom / Video Playback) -->
+<div class="modal-backdrop" id="media-modal" onclick="closeModal(event)">
+  <div class="modal-dialog">
+    <button type="button" class="modal-close-btn" onclick="closeModalDirect()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+    <h3 id="modal-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Media Viewer</h3>
+    <div id="modal-content-wrapper">
+      <!-- Image or Video injected here -->
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/records.js"></script>
+{% endblock %}

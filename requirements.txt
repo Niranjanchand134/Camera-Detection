@@ -1,0 +1,22 @@
+# ==============================================================================
+# Camera Detection & Telemetry System
+# Python Dependencies
+# ==============================================================================
+
+# Core Computer Vision & Image Processing
+opencv-python>=4.8.0
+numpy>=1.24.0,<3.0.0
+Pillow>=10.0.0
+
+# Hardware-Accelerated Video Encoding & RTSP Audio Streaming (PyAV / FFmpeg)
+av>=11.0.0
+
+# Edge AI Object Detection & Tracking (Automatically manages PyTorch/YOLO)
+ultralytics>=8.0.0
+
+# Web Dashboard & Environment Config
+Flask>=3.0.0
+python-dotenv>=1.0.0
+
+# License Plate OCR (Optional)
+pytesseract>=0.3.10
